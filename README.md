@@ -5,7 +5,7 @@
 1. Open search results, like https://www.aliexpress.com/w/wholesale-rear-light-ebike.html?g=y&SearchText=rear+light+ebike
 1. Scroll to the bottom of the page (to load all products)
 1. Open Dev Tools and the browser console
-1. Paste the code from `index.js` into the console and press Enter (you need to type `allow pasting` if this is your first time)
+1. Paste the code from [`index.js`](./index.js) into the console and press Enter (you need to type `allow pasting` if this is your first time)
 1. Wait for the script to finish
 
 ## How it works
