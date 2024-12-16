@@ -2,6 +2,8 @@
 
 ## Usage
 
+NOTE: Tested on Chrome and a bit in Firefox, should work in other browsers as well
+
 1. Open search results, like https://www.aliexpress.com/w/wholesale-rear-light-ebike.html?g=y&SearchText=rear+light+ebike
 1. Scroll to the bottom of the page (to load all products)
 1. Open Dev Tools and the browser console
