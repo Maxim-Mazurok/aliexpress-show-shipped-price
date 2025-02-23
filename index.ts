@@ -40,11 +40,12 @@ void (async () => {
     return waitForSelectorToHaveSomeText(selector, within);
   };
 
-  const waitAndTryToClick = async (
-    selector: string,
-    within?: Element
-  ): Promise<boolean> => {
-    const element = await waitForSelectorToAppear(selector, within);
+  const tryToClick = (selector: string, within?: Element): boolean => {
+    const element = (within ?? document).querySelector(selector);
+    if (!element) {
+      console.error(`Element not found for selector: ${selector}`);
+      return false;
+    }
     if (!("click" in element) || typeof element.click !== "function") {
       // Isn't possible in theory, but just in case (TS asked for this)
       console.error(`Element is not clickable for selector: ${selector}`);
@@ -75,7 +76,7 @@ void (async () => {
   for (const card of productCards) {
     console.log(`Processing card:`, card);
 
-    if (!(await waitAndTryToClick(`span[title="See preview"]`, card))) continue; // fixes https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price/issues/4
+    if (!tryToClick(`span[title="See preview"]`, card)) continue; // fixes https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price/issues/4
 
     const productPriceElement = await waitForSelectorToAppearAndHaveSomeText(
       `.pdp-comp-price-current`
@@ -90,7 +91,7 @@ void (async () => {
       ? 0
       : parseNumber(shippingCostText);
 
-    if (!(await waitAndTryToClick(`button[aria-label="Close"]`))) continue; // Shouldn't happen, unless AliExpress changed something
+    if (!tryToClick(`button[aria-label="Close"]`)) continue; // Shouldn't happen, unless AliExpress changed something
 
     const productPriceLine = getProductPriceLine(card);
     const shippedPrice = productPrice + shippingCost;
