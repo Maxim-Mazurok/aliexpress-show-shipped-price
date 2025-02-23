@@ -17,7 +17,12 @@ NOTE: Tested on Chrome and a bit in Firefox, should work in other browsers as we
 1. It will close the preview and display the price and shipping information on the product card
 1. It will sort the product cards by the total price (price + shipping)
 
-## Notes
+## Usage Notes
+
+- In my experience, using default "Best Match" sorting works best, but if price sort also works for your query - it might help to find a few more good deals
+- If you see products at the same shipped price - I recommend to check the store rating, age, etc. More mature stores tend to ship faster in my experience.
+
+## Dev Notes
 
 - Product card selector: `.search-item-card-wrapper-gallery`
 - Preview selector: `span[title="See preview"]`

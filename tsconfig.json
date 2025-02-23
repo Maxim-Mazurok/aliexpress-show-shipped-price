@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2024", // Fixes `Type 'NodeListOf<Element>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.`
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable" // Fixes ` Type 'NodeListOf<Element>' must have a '[Symbol.iterator]()' method that returns an iterator.`
+    ],
+    "strict": true
+  }
+}

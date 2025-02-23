@@ -1,0 +1,24 @@
+{
+  "name": "aliexpress-show-shipped-price",
+  "version": "1.0.0",
+  "description": "AliExpress Show Shipped Price",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "npm run build -- --noEmit && npx eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price/issues"
+  },
+  "homepage": "https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1"
+  }
+}
