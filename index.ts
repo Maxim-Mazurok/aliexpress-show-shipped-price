@@ -55,6 +55,18 @@ void (async () => {
     return true;
   };
 
+  const getProductPriceLine = (card: Element) => {
+    const priceLineSelectors = [
+      `[class^="multi--price--"]`,
+      `[class^="us--price--"]`,
+    ];
+    for (const selector of priceLineSelectors) {
+      const priceLine = card.querySelector(selector);
+      if (priceLine) return priceLine;
+    }
+    return null;
+  };
+
   const parseNumber = (text: string) => Number(text.replace(/[^0-9.]/g, ``));
 
   const productCards = document.querySelectorAll(
@@ -80,7 +92,7 @@ void (async () => {
 
     if (!(await waitAndTryToClick(`button[aria-label="Close"]`))) continue; // Shouldn't happen, unless AliExpress changed something
 
-    const productPriceLine = card.querySelector(`[class^="multi--price--"]`);
+    const productPriceLine = getProductPriceLine(card);
     const shippedPrice = productPrice + shippingCost;
     console.log(
       `Shipped price: $${shippedPrice.toFixed(2)} = $${productPrice.toFixed(
@@ -101,17 +113,12 @@ void (async () => {
     return;
   }
   const sortedDivs = Array.from(container.children).sort((a, b) => {
-    const priceTextA = a.querySelector(
-      `[class^="multi--price--"]`
-    )?.textContent;
-    const priceTextB = b.querySelector(
-      `[class^="multi--price--"]`
-    )?.textContent;
+    const getPriceForComparison = (element: Element) => {
+      const priceText = getProductPriceLine(element)?.textContent;
+      return priceText ? parseNumber(priceText) : Infinity; // `Infinity` to put elements without price at the end of the list
+    };
 
-    const priceA = priceTextA ? parseNumber(priceTextA) : Infinity;
-    const priceB = priceTextB ? parseNumber(priceTextB) : Infinity;
-
-    return priceA - priceB;
+    return getPriceForComparison(a) - getPriceForComparison(b);
   });
   container.innerHTML = "";
   sortedDivs.forEach((div) => container.appendChild(div));

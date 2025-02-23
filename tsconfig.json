@@ -6,6 +6,7 @@
       "DOM",
       "DOM.Iterable" // Fixes ` Type 'NodeListOf<Element>' must have a '[Symbol.iterator]()' method that returns an iterator.`
     ],
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true // Was getting some weird @types/node issues without this, out of nowhere (on old PC)
   }
 }

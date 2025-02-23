@@ -29,5 +29,5 @@ NOTE: Tested on Chrome and a bit in Firefox, should work in other browsers as we
 - Price selector: `.pdp-comp-price-current` ("AU$12.99")
 - Shipping selector: `.dynamic-shipping-line:first-child` ("Free shipping " / "Shipping: AU$4.89")
 - Close button selector: `button[aria-label="Close"]`
-- Product price line selector: `[class^="multi--price--"]`
+- Product price line selector: `[class^="multi--price--"]` or `[class^="us--price--"]`
 - Container selector: `#card-list`
