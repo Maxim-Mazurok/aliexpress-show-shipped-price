@@ -44,15 +44,39 @@ void (async () => {
         element.click();
         return true;
     };
+    const internalPriceLineClass = `aliexpress-show-shipped-price`;
     const getProductPriceLine = (card) => {
-        const priceLineSelectors = [
-            `[class^="multi--price--"]`,
-            `[class^="us--price--"]`,
-        ];
-        for (const selector of priceLineSelectors) {
-            const priceLine = card.querySelector(selector);
-            if (priceLine)
-                return priceLine;
+        function trySelectors() {
+            const priceLineSelectors = [
+                `.${internalPriceLineClass}`, // our internal class, used for sorting later
+                `[class^="multi--price--"]`,
+                `[class^="us--price--"]`,
+            ];
+            for (const selector of priceLineSelectors) {
+                const priceLine = card.querySelector(selector);
+                if (priceLine)
+                    return priceLine;
+            }
+        }
+        function tryCurrencySymbol() {
+            // Find the first element with a style attribute containing "currency-symbol"
+            const element = card.querySelector('[style*="currency-symbol"]');
+            if (!element)
+                return null; // If no such element is found, return null
+            // Find the closest parent <div>
+            return element.closest("div");
+        }
+        function tryPriceRegex() {
+            const priceRegex = /^AU\$\d+(\.\d+)?$/;
+            for (const element of card.querySelectorAll("*")) {
+                if (priceRegex.test(element.textContent ?? ""))
+                    return element;
+            }
+        }
+        for (const fn of [trySelectors, tryCurrencySymbol, tryPriceRegex]) {
+            const result = fn();
+            if (result)
+                return result;
         }
         return null;
     };
@@ -78,7 +102,7 @@ void (async () => {
             console.error(`Price line not found for card:`, card);
             continue;
         }
-        productPriceLine.innerHTML = `Shipped: <b>$${shippedPrice.toFixed(2)}<b>`;
+        productPriceLine.innerHTML = `<div class="${internalPriceLineClass}">Shipped: <b>$${shippedPrice.toFixed(2)}<b></div>`;
     }
     const container = document.querySelector(`#card-list`);
     if (!container) {
