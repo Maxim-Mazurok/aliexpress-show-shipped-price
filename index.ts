@@ -1,10 +1,14 @@
 void (async () => {
   const waitForSelectorToAppear = async (
     selector: string,
-    within?: Element
+    within?: Element,
+    signal?: AbortSignal
   ): Promise<Element> => {
     let element: Element | null;
     do {
+      if (signal?.aborted) {
+        throw new Error(`Aborted waiting for selector: ${selector}`);
+      }
       element = (within ?? document).querySelector(selector);
       if (!element) {
         console.log(`Waiting for selector: ${selector}`);
@@ -15,12 +19,26 @@ void (async () => {
     return element;
   };
 
+  function trySelectors(
+    selectors: string[],
+    element: Element
+  ): Element | undefined {
+    for (const selector of selectors) {
+      const found = element.querySelector(selector);
+      if (found) return found;
+    }
+  }
+
   const waitForSelectorToHaveSomeText = async (
     selector: string,
-    within?: Element
+    within?: Element,
+    signal?: AbortSignal
   ): Promise<Element> => {
     let element: Element | null;
     do {
+      if (signal?.aborted) {
+        throw new Error(`Aborted waiting for text in selector: ${selector}`);
+      }
       element = (within ?? document).querySelector(selector);
       if (element?.textContent?.trim()) {
         break;
@@ -32,12 +50,32 @@ void (async () => {
     return element;
   };
 
-  const waitForSelectorToAppearAndHaveSomeText = async (
-    selector: string,
+  const waitForSelectorsToAppearAndHaveSomeText = async (
+    selectors: string[],
     within?: Element
   ): Promise<Element> => {
-    await waitForSelectorToAppear(selector, within);
-    return waitForSelectorToHaveSomeText(selector, within);
+    const abortController = new AbortController();
+    const waits = selectors.map((selector) =>
+      waitForSelectorToAppearAndHaveSomeText(
+        selector,
+        within,
+        abortController.signal
+      )
+    );
+    try {
+      return await Promise.race(waits);
+    } finally {
+      abortController.abort();
+    }
+  };
+
+  const waitForSelectorToAppearAndHaveSomeText = async (
+    selector: string,
+    within?: Element,
+    signal?: AbortSignal
+  ): Promise<Element> => {
+    await waitForSelectorToAppear(selector, within, signal);
+    return waitForSelectorToHaveSomeText(selector, within, signal);
   };
 
   const tryToClick = (selector: string, within?: Element): boolean => {
@@ -58,17 +96,13 @@ void (async () => {
 
   const internalPriceLineClass = `aliexpress-show-shipped-price`;
   const getProductPriceLine = (card: Element) => {
-    function trySelectors() {
-      const priceLineSelectors = [
-        `.${internalPriceLineClass}`, // our internal class, used for sorting later
-        `[class^="multi--price--"]`,
-        `[class^="us--price--"]`,
-      ];
-      for (const selector of priceLineSelectors) {
-        const priceLine = card.querySelector(selector);
-        if (priceLine) return priceLine;
-      }
-    }
+    const priceLineSelectors = [
+      `.${internalPriceLineClass}`, // our internal class, used for sorting later
+      `[class^="multi--price--"]`,
+      `[class^="us--price--"]`,
+    ];
+
+    const tryPriceSelectors = () => trySelectors(priceLineSelectors, card);
 
     function tryCurrencySymbol() {
       // Find the first element with a style attribute containing "currency-symbol"
@@ -85,7 +119,7 @@ void (async () => {
       }
     }
 
-    for (const fn of [trySelectors, tryCurrencySymbol, tryPriceRegex]) {
+    for (const fn of [tryPriceSelectors, tryCurrencySymbol, tryPriceRegex]) {
       const result = fn();
       if (result) return result;
     }
@@ -103,9 +137,10 @@ void (async () => {
 
     if (!tryToClick(`span[title="See preview"]`, card)) continue; // fixes https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price/issues/4
 
-    const productPriceElement = await waitForSelectorToAppearAndHaveSomeText(
-      `.pdp-comp-price-current`
-    );
+    const productPriceElement = await waitForSelectorsToAppearAndHaveSomeText([
+      `.pdp-comp-price-current`,
+      `[class^="price-default--current--"]`,
+    ]);
     const productPrice = parseNumber(productPriceElement.textContent ?? "");
 
     const shippingCostElement = await waitForSelectorToAppearAndHaveSomeText(

@@ -1,8 +1,11 @@
 "use strict";
 void (async () => {
-    const waitForSelectorToAppear = async (selector, within) => {
+    const waitForSelectorToAppear = async (selector, within, signal) => {
         let element;
         do {
+            if (signal?.aborted) {
+                throw new Error(`Aborted waiting for selector: ${selector}`);
+            }
             element = (within ?? document).querySelector(selector);
             if (!element) {
                 console.log(`Waiting for selector: ${selector}`);
@@ -12,9 +15,19 @@ void (async () => {
         console.log(`Selector appeared: ${selector}`);
         return element;
     };
-    const waitForSelectorToHaveSomeText = async (selector, within) => {
+    function trySelectors(selectors, element) {
+        for (const selector of selectors) {
+            const found = element.querySelector(selector);
+            if (found)
+                return found;
+        }
+    }
+    const waitForSelectorToHaveSomeText = async (selector, within, signal) => {
         let element;
         do {
+            if (signal?.aborted) {
+                throw new Error(`Aborted waiting for text in selector: ${selector}`);
+            }
             element = (within ?? document).querySelector(selector);
             if (element?.textContent?.trim()) {
                 break;
@@ -25,9 +38,19 @@ void (async () => {
         console.log(`Selector appeared with some text: ${selector}`);
         return element;
     };
-    const waitForSelectorToAppearAndHaveSomeText = async (selector, within) => {
-        await waitForSelectorToAppear(selector, within);
-        return waitForSelectorToHaveSomeText(selector, within);
+    const waitForSelectorsToAppearAndHaveSomeText = async (selectors, within) => {
+        const abortController = new AbortController();
+        const waits = selectors.map((selector) => waitForSelectorToAppearAndHaveSomeText(selector, within, abortController.signal));
+        try {
+            return await Promise.race(waits);
+        }
+        finally {
+            abortController.abort();
+        }
+    };
+    const waitForSelectorToAppearAndHaveSomeText = async (selector, within, signal) => {
+        await waitForSelectorToAppear(selector, within, signal);
+        return waitForSelectorToHaveSomeText(selector, within, signal);
     };
     const tryToClick = (selector, within) => {
         const element = (within ?? document).querySelector(selector);
@@ -46,18 +69,12 @@ void (async () => {
     };
     const internalPriceLineClass = `aliexpress-show-shipped-price`;
     const getProductPriceLine = (card) => {
-        function trySelectors() {
-            const priceLineSelectors = [
-                `.${internalPriceLineClass}`, // our internal class, used for sorting later
-                `[class^="multi--price--"]`,
-                `[class^="us--price--"]`,
-            ];
-            for (const selector of priceLineSelectors) {
-                const priceLine = card.querySelector(selector);
-                if (priceLine)
-                    return priceLine;
-            }
-        }
+        const priceLineSelectors = [
+            `.${internalPriceLineClass}`, // our internal class, used for sorting later
+            `[class^="multi--price--"]`,
+            `[class^="us--price--"]`,
+        ];
+        const tryPriceSelectors = () => trySelectors(priceLineSelectors, card);
         function tryCurrencySymbol() {
             // Find the first element with a style attribute containing "currency-symbol"
             const element = card.querySelector('[style*="currency-symbol"]');
@@ -73,7 +90,7 @@ void (async () => {
                     return element;
             }
         }
-        for (const fn of [trySelectors, tryCurrencySymbol, tryPriceRegex]) {
+        for (const fn of [tryPriceSelectors, tryCurrencySymbol, tryPriceRegex]) {
             const result = fn();
             if (result)
                 return result;
@@ -86,7 +103,10 @@ void (async () => {
         console.log(`Processing card:`, card);
         if (!tryToClick(`span[title="See preview"]`, card))
             continue; // fixes https://github.com/Maxim-Mazurok/aliexpress-show-shipped-price/issues/4
-        const productPriceElement = await waitForSelectorToAppearAndHaveSomeText(`.pdp-comp-price-current`);
+        const productPriceElement = await waitForSelectorsToAppearAndHaveSomeText([
+            `.pdp-comp-price-current`,
+            `[class^="price-default--current--"]`,
+        ]);
         const productPrice = parseNumber(productPriceElement.textContent ?? "");
         const shippingCostElement = await waitForSelectorToAppearAndHaveSomeText(`.dynamic-shipping-line:first-child`);
         const shippingCostText = shippingCostElement.textContent ?? "";

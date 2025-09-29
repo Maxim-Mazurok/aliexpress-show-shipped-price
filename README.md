@@ -26,7 +26,7 @@ NOTE: Tested on Chrome and a bit in Firefox, should work in other browsers as we
 
 - Product card selector: `.search-item-card-wrapper-gallery`
 - Preview selector: `span[title="See preview"]`
-- Price selector: `.pdp-comp-price-current` ("AU$12.99")
+- Price selector: `.pdp-comp-price-current` or `[class^="price-default--current--"]` ("AU$12.99")
 - Shipping selector: `.dynamic-shipping-line:first-child` ("Free shipping " / "Shipping: AU$4.89")
 - Close button selector: `button[aria-label="Close"]`
 - Product price line selector: `[class^="multi--price--"]` or `[class^="us--price--"]`
